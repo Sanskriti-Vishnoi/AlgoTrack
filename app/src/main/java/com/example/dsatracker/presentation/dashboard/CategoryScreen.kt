@@ -61,7 +61,50 @@ fun CategoryScreen(
     var searchQuery by remember { mutableStateOf("") }
     var expandedProblemId by remember { mutableStateOf<Int?>(null) }
 
+    // In variables ko expandedProblemId ke niche daal do
+    var showAddProblemDialog by remember { mutableStateOf(false) }
+    var newProblemTitle by remember { mutableStateOf("") }
+    var newProblemUrl by remember { mutableStateOf("") }
+
     val filteredProblems = problems.filter { it.title.contains(searchQuery, ignoreCase = true) }
+
+    if (showAddProblemDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddProblemDialog = false },
+            title = { Text("Add New Problem") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = newProblemTitle,
+                        onValueChange = { newProblemTitle = it },
+                        label = { Text("Problem Title") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newProblemUrl,
+                        onValueChange = { newProblemUrl = it },
+                        label = { Text("LeetCode/GFG URL") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (newProblemTitle.isNotBlank()) {
+                        // 🔥 ViewModel function call to save in Firestore
+                        viewModel.addProblemToCustomSheet(sheetId, categoryId, newProblemTitle, newProblemUrl)
+                        newProblemTitle = ""
+                        newProblemUrl = ""
+                        showAddProblemDialog = false
+                    }
+                }) { Text("Add") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddProblemDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -91,7 +134,19 @@ fun CategoryScreen(
                     singleLine = true
                 )
             }
-        }
+        },
+
+        floatingActionButton = {
+            if (sheetId != "striver_sde") { // Striver sheet read-only hai, isliye sirf custom mein allow karenge
+                FloatingActionButton(
+                    onClick = { showAddProblemDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Problem")
+                }
+            }
+        },
+
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             val progress = if (category != null) viewModel.getProgress(category) else 0
