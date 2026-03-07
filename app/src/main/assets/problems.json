@@ -1,0 +1,31 @@
+{
+  "categories": [
+    {
+      "id": "arrays",
+      "title": "Arrays",
+      "problems": [
+        {
+          "id": 1,
+          "title": "Two Sum",
+          "url": "https://leetcode.com/problems/two-sum/"
+        },
+        {
+          "id": 2,
+          "title": "Best Time to Buy and Sell Stock",
+          "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/"
+        }
+      ]
+    },
+    {
+      "id": "linkedlist",
+      "title": "Linked List",
+      "problems": [
+        {
+          "id": 25,
+          "title": "Reverse Linked List",
+          "url": "https://leetcode.com/problems/reverse-linked-list/"
+        }
+      ]
+    }
+  ]
+}
