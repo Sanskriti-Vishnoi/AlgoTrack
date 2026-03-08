@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.dsatracker.data.AuthRepository
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun RegisterScreen(navController: NavController) {
@@ -21,6 +22,9 @@ fun RegisterScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    // 🔥 Firebase Instance
+    val auth = FirebaseAuth.getInstance()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -66,15 +70,26 @@ fun RegisterScreen(navController: NavController) {
                 }
 
                 isLoading = true
-                // CORRECTED: Calling registerUser here
                 AuthRepository.registerUser(email, password) { success, message ->
-                    isLoading = false
                     if (success) {
-                        Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
-                        navController.navigate("dashboard") {
-                            popUpTo("register") { inclusive = true }
-                        }
+                        // 🔥 STEP 1: Link bhejo asli email check karne ke liye
+                        auth.currentUser?.sendEmailVerification()
+                            ?.addOnCompleteListener { task ->
+                                isLoading = false
+                                if (task.isSuccessful) {
+                                    Toast.makeText(context, "Account created! Please check your email for the verification link.", Toast.LENGTH_LONG).show()
+
+                                    // 🔥 STEP 2: Logout karke Login screen par bhejo
+                                    auth.signOut()
+                                    navController.navigate("login") {
+                                        popUpTo("register") { inclusive = true }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Error sending verification email.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                     } else {
+                        isLoading = false
                         Toast.makeText(context, message ?: "Registration failed.", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -85,6 +100,8 @@ fun RegisterScreen(navController: NavController) {
             if (isLoading) CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
             else Text("Register")
         }
+
+
 
         TextButton(onClick = { navController.popBackStack() }) {
             Text("Already have an account? Login")

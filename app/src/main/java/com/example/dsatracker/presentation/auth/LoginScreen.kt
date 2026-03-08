@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.dsatracker.data.AuthRepository
+import com.google.firebase.auth.FirebaseAuth // 🔥 Import zaroori hai
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -21,6 +22,9 @@ fun LoginScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    // 🔥 Firebase Instance
+    val auth = FirebaseAuth.getInstance()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -61,14 +65,26 @@ fun LoginScreen(navController: NavController) {
                 }
 
                 isLoading = true
-                // CORRECTED: Calling loginUser here
                 AuthRepository.loginUser(email, password) { success, message ->
-                    isLoading = false
                     if (success) {
-                        navController.navigate("dashboard") {
-                            popUpTo("login") { inclusive = true }
+                        val user = auth.currentUser
+
+                        // 🔥 Reload taaki status update ho jaye (link click hua ya nahi)
+                        user?.reload()?.addOnCompleteListener { task ->
+                            isLoading = false
+                            if (user.isEmailVerified) {
+                                // ✅ Shabaash! Verified hai.
+                                navController.navigate("dashboard") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            } else {
+                                // ❌ Pehle verify karo bhai!
+                                auth.signOut() // Bahar nikal do unverified user ko
+                                Toast.makeText(context, "Please verify your email first! Check your inbox.", Toast.LENGTH_LONG).show()
+                            }
                         }
                     } else {
+                        isLoading = false
                         Toast.makeText(context, message ?: "Invalid credentials. Please try again.", Toast.LENGTH_SHORT).show()
                     }
                 }
